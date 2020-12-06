@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script>
+        function categoryChange(e) {
+            var bs = ["해운대구", "서구", "사하구", "수영군", "기장군"];
+            var ic = ["중구", "옹진군"];
+            var us = ["동구", "울주군"];
+            var kw = ["강릉시", "동해시", "속초시", "삼척시", "고성군", "양양군"];
+            var cn = ["보령시", "당진시", "서천군", "태안군"];
+            var jb = ["군산시", "고창군", "부안군"];
+            var jn = ["목포시", "여수시", "고흥군", "보성군", "장흥군", "해남군", "무안군", "함평군","영광군", "완도군", "진도군", "신안군"];
+            var gb = ["포항시 북구", "경주시", "영덕군", "울진군"];
+            var gn = ["창원시 마산합포구", "사천시", "통영시", "거제시", "남해군"];
+            var jj = ["제주시", "서귀포시"];
+
+            var target = document.getElementById("sigun");
+
+            if(e.value == "부산광역시") var d = bs;
+            else if(e.value == "인천광역시") var d = ic;
+            else if(e.value == "울산광역시") var d = us;
+            else if(e.value == "강원도") var d = kw;
+            else if(e.value == "충청남도") var d = cn;
+            else if(e.value == "전라북도") var d = jb;
+            else if(e.value == "전라남도") var d = jn;
+            else if(e.value == "경상북도") var d = gb;
+            else if(e.value == "경상남도") var d = gn;
+            else if(e.value == "제주특별자치도") var d = jj;
+
+            target.options.length = 0;
+
+            var opt = document.createElement("option");
+            opt.value = "none";
+            opt.innerHTML = "=== 시군구명 ===";
+            target.appendChild(opt);
+
+            for (x in d) {
+                var opt = document.createElement("option");
+                opt.value = d[x];
+                opt.innerHTML = d[x];
+                target.appendChild(opt);
+            }
+        }
+
+    </script>
+    <style>
+        h1 {text-align: center; color:dodgerblue}
+        form {text-align: center;}
+        p {margin-bottom: 4%;}
+        select {font-size: 14pt; margin-right: 5%;}
+        td {overflow: auto;}
+        th {text-align: center;}
+        table {text-align: center; table-layout: fixed; margin-left: auto; margin-right: auto; width: 700px; height: 100px}
+        #search {width: 600px; height: 40px; font-size:24px; border-width: 7px; border-color:dodgerblue}
+    </style>
+</head>
+<body>
+    <h1>해수욕장 휴양 적합 여부 판별 서비스</h1><br>
+    <form action = "http://127.0.0.1:5000/main" method = "POST">
+        <p ><input id="search", type="text", name="search">
+        <input type="submit", value="검색"></p>
+        <p><select name="sido" onchange="categoryChange(this)">
+            <option value="none">=== 시도명 ===</option>
+            <option value="부산광역시">부산광역시</option>
+            <option value="인천광역시">인천광역시</option>
+            <option value="울산광역시">울산광역시</option>
+            <option value="강원도">강원도</option>
+            <option value="충청남도">충청남도</option>
+            <option value="전라북도">전라북도</option>
+            <option value="전라남도">전라남도</option>
+            <option value="경상북도">경상북도</option>
+            <option value="경상남도">경상남도</option>
+            <option value="제주특별자치도">제주특별자치도</option>
+        </select>
+
+        <select id="sigun" name="sigun">
+            <option value="none">=== 시군구명 ===</option>
+
+        </select>
+        <input type="submit", value="조회"></p>
+    </form>
+    <table id = result, border="2">
+        <thead>
+            <tr>
+                <th>이름</th>
+                <th>개장일</th>
+                <th>폐장일</th>
+                <th width="30%">사이트</th>
+                <th>연락처</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if result is defined %}
+            {% for i in range(result['해수욕장명']|length) %}
+                <tr>
+                    <td><a href="{{ url_for('detail') + '?name=' + result['해수욕장명'][i] }}" onclick="window.open(this.href, '_blank', 'width=510, height=620, toolbars=no, scrollbars=yes'); return false">{{ result['해수욕장명'][i] }}</a></td>
+                    <td>{{ result['개장일'][i] }}</td>
+                    <td>{{ result['폐장일'][i] }}</td>
+                    <td><a href="{{ result['홈페이지'][i] }}">{{ result['홈페이지'][i] }}</a></td>
+                    <td>{{ result['연락처'][i] }}</td>
+                </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+
+    </table>
+</body>
+</html>
