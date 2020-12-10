@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 import requests
 import pandas as pd
 from urllib import parse
+import pymongo
+from bson.json_util import dumps
 
 
 url1 = 'http://apis.data.go.kr/1192000/service/OceansBeachSeawaterService1/getOceansBeachSeawaterInfo1'
@@ -10,14 +12,20 @@ url2 = 'https://seantour.com/seantour_map/travel/getBeachCongestionApi.do'
 url3 = 'http://apis.data.go.kr/1192000/service/OceansBeachInfoService1/getOceansBeachInfo1'
 key2 = 'JczkNAYUK0nuC7gzVNgSj2%2FUHiwakF7h%2BMI7BkHeAuKc7ctuY961tl%2F%2B%2Fo2hCS2TjorkkeQ2IEek%2BGPFiC0Xdg%3D%3D'
 
-
 app = Flask(__name__)
+# app.config["MONGO_URI"] = "mongodb://ec2-13-125-5-167.ap-northeast-2.compute.amazonaws.com:27017/gobeachornot"
+# mongo = PyMongo(app)
+
+@app.route('/')
+def index():
+    return redirect(url_for('main'))
+
 
 @app.route('/main',methods = ['POST','GET'])
 def main():
     if request.method == 'POST':
         fil = request.form
-
+        print(fil)
         f = pd.read_csv('해양수산부_해수욕장 개장 폐장 정보.csv', encoding = 'CP949', engine='python')
 
         sido = f['시도 주소'] == fil['sido']
@@ -145,8 +153,72 @@ def detail():
             result['lon'] = i['lon']
             break
 
-    print(render_template('detail.html',result=result))
+    # print(render_template('detail.html',result=result))
     return render_template('detail.html',result=result)
+
+@app.route('/login',methods = ['POST','GET'])
+def login():
+    if request.method == 'POST':
+        info = request.form
+        print(info)
+
+
+
+    return render_template("login.html")
+
+@app.route('/checkid',methods = ['POST'])
+def checkid():
+    if request.method == 'POST':
+        info = request.form
+
+        client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
+        db = client.gobeachornot
+        col = db.signup
+
+        query = {"id":info["id"], "pw":info["pw"]}
+
+        cur = col.find(query)
+        doc = dumps(list(cur))
+
+        if doc != "[]":
+            return render_template("mybeach.html")
+
+
+        return render_template("login.html")
+
+
+
+@app.route('/mybeach')
+def mybeach():
+
+    client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
+    db = client.gobeachornot
+    col_list = db.collection_names()
+    # col = db.signup
+    print(col_list)
+
+    return render_template("login.html")
+
+@app.route('/signup',methods = ['POST','GET'])
+def signup():
+    if request.method == 'GET':
+        return render_template("signup.html")
+    if request.method == 'POST':
+        client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
+        db = client.gobeachornot
+        col = db.signup
+
+        tmp = request.form
+
+        if tmp['id']=="" or tmp['pw']=="" or tmp['name']=="" or tmp['hp']=="":
+            message = "빈칸 없이 모두 작성 부탁드립니다."
+            return render_template("signup.html", message=message)
+
+        info = {'id':tmp['id'], 'pw':tmp['pw'], 'name':tmp['name'], 'hp':tmp['hp']}
+        col.insert_one(info)
+
+        return render_template("login.html")
+
 
 
 if __name__ == '__main__':
