@@ -1,9 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
+from urllib import parse
+from bson.json_util import dumps
+import pymongo
+import json
 import requests
 import pandas as pd
-from urllib import parse
-import pymongo
-from bson.json_util import dumps
+from datetime import timedelta
+import datetime
 
 
 url1 = 'http://apis.data.go.kr/1192000/service/OceansBeachSeawaterService1/getOceansBeachSeawaterInfo1'
@@ -12,7 +15,17 @@ url2 = 'https://seantour.com/seantour_map/travel/getBeachCongestionApi.do'
 url3 = 'http://apis.data.go.kr/1192000/service/OceansBeachInfoService1/getOceansBeachInfo1'
 key2 = 'JczkNAYUK0nuC7gzVNgSj2%2FUHiwakF7h%2BMI7BkHeAuKc7ctuY961tl%2F%2B%2Fo2hCS2TjorkkeQ2IEek%2BGPFiC0Xdg%3D%3D'
 
+sido_map = {'부산광역시':'부산','인천광역시':'인천','울산광역시':'울산','강원도':'강원','충청남도':'충남'
+               ,'전라북도':'전북','전라남도':'전남','경상북도':'경북','경상남도':'경남','제주특별자치도':'제주'}
+
 app = Flask(__name__)
+app.secret_key = '~@gsafewf^@#$^vwssdf324315aw&^$#'
+
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=5)
 
 @app.route('/')
 def index():
@@ -56,17 +69,16 @@ def main():
 @app.route('/detail')
 def detail():
 
-    sido_map = {'부산광역시':'부산','인천광역시':'인천','울산광역시':'울산','강원도':'강원','충청남도':'충남'
-               ,'전라북도':'전북','전라남도':'전남','경상북도':'경북','경상남도':'경남','제주특별자치도':'제주'}
-
     name = request.args.get('name')
     sido = sido_map[request.args.get('sido')]
-
 
     f = pd.read_csv('해양수산부_해수욕장 개장 폐장 정보.csv', encoding='CP949', engine='python')
     data = f[f['해수욕장명'] == name].to_dict()
 
     result = {}
+    result['name'] = name
+    result['sido'] = request.args.get('sido')
+
     key = list(data['연번'])[0]
 
     result['해수욕장명'] = data['해수욕장명'][key]
@@ -156,19 +168,13 @@ def detail():
 
 @app.route('/login',methods = ['POST','GET'])
 def login():
-    if request.method == 'POST':
-        info = request.form
-        print(info)
+    if request.method == 'GET':
+        return render_template("login.html")
 
-
-
-    return render_template("login.html")
-
-@app.route('/checkid',methods = ['POST'])
-def checkid():
     if request.method == 'POST':
         info = request.form
 
+        client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
         db = client.gobeachornot
         col = db.signup
 
@@ -178,28 +184,63 @@ def checkid():
         doc = dumps(list(cur))
 
         if doc != "[]":
-            return render_template("mybeach.html")
-
+            session['uid'] = info['id']
+            print("{0} login!".format(session['uid']))
+            return redirect(url_for('main'))
+        else :
+            message = "아이디 또는 비밀번호를 확인하시오."
+            return render_template("login.html",message=message)
 
         return render_template("login.html")
 
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('main'))
 
-
-@app.route('/mybeach')
+@app.route('/mybeach',methods=['POST','GET'])
 def mybeach():
+    if 'uid' in session:
+        if request.method == 'POST':
+            value = request.form.getlist('check')
 
-    db = client.gobeachornot
-    col_list = db.collection_names()
-    # col = db.signup
-    print(col_list)
+            client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
+            db = client.gobeachornot
+            col = db.mybeach
 
-    return render_template("login.html")
+            for i in value:
+                q = {}
+                q['name'] = i
+                col.delete_one(q)
+
+            return redirect(url_for("mybeach"))
+        else:
+            print("mybeach session id : {0}".format(session['uid']))
+
+            client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
+            db = client.gobeachornot
+            col = db.mybeach
+            cur = col.find({'id':session['uid']})
+            doc = dumps(list(cur))
+            result={}
+            no = 0
+            if doc != "[]":
+                for i in json.loads(doc):   #list
+                    result[no]=i
+                    no+=1
+
+            return render_template("mybeach.html",result=result)
+
+    else:
+        return render_template("login.html")
+
 
 @app.route('/signup',methods = ['POST','GET'])
 def signup():
     if request.method == 'GET':
         return render_template("signup.html")
     if request.method == 'POST':
+        client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
         db = client.gobeachornot
         col = db.signup
 
@@ -214,6 +255,29 @@ def signup():
 
         return render_template("login.html")
 
+@app.route('/registerBeach')
+def registerBeach():
+    if 'uid' in session:
+        now = datetime.datetime.now()
+        nowDatetime = now.strftime('%Y-%m-%d %H:%M:%S')
+
+        print("register session id : {0}".format(session['uid']))
+
+        name = request.args.get('name')
+        sido = sido_map[request.args.get('sido')]
+
+        client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
+        db = client.gobeachornot
+        col = db.mybeach
+
+        q = {'id':session['uid'],'name':name,'sido':sido,'time':nowDatetime}
+        col.insert_one(q)
+
+        qp = "?"+'name='+name+'&sido='+request.args.get('sido')
+
+        return redirect(url_for('detail')+qp)
+    else:
+        return render_template("login.html")
 
 
 if __name__ == '__main__':
