@@ -36,33 +36,59 @@ def index():
 def main():
     if request.method == 'POST':
         fil = request.form
-        print(fil)
-        f = pd.read_csv('해양수산부_해수욕장 개장 폐장 정보.csv', encoding = 'CP949', engine='python')
+        f = pd.read_csv('해양수산부_해수욕장 개장 폐장 정보.csv', encoding='CP949', engine='python')
 
-        sido = f['시도 주소'] == fil['sido']
-        sigun = f['시군구 주소'] == fil['sigun']
+        if 'search' in fil:
 
-        if fil['sido'] != "none" and fil['sigun'] != "none":
-            data = f[sido & sigun][['해수욕장명','개장일','폐장일','홈페이지','연락처']]
-        elif fil['sigun'] == "none":
-            data = f[sido][['해수욕장명', '개장일', '폐장일', '홈페이지', '연락처']]
-        else :
-            data = f[sigun][['해수욕장명','개장일','폐장일','홈페이지','연락처']]
+            name = f['해수욕장명'] == fil['search']
+            data = f[name][['해수욕장명','시도 주소','시군구 주소','개장일','폐장일','홈페이지','연락처']]
 
-        key = data.to_dict().keys()
-        v = data.to_dict().values()
-        v = list(map(lambda x:list(x.values()), v))
-        value=[]
+            key = data.to_dict().keys()
+            v = data.to_dict().values()
+            v = list(map(lambda x: list(x.values()), v))
+            value = []
 
-        for i in range(5):
-            d = {j:v[i][j] for j in range(len(v[i]))}
-            value.append(d)
+            for i in range(7):
+                d = {j: v[i][j] for j in range(len(v[i]))}
+                value.append(d)
 
-        result = dict(zip(key, value))
-        result['시도 주소'] = fil['sido']
-        result['시군구 주소'] = fil['sigun']
+            result = dict(zip(key, value))
+
+            if result['시도 주소'] != {}:
+                result['시도 주소'] = result['시도 주소'][0]
+                result['시군구 주소'] = result['시군구 주소'][0]
+            else:
+                del result['시도 주소']
+                del result['시군구 주소']
+
+
+        else:
+            sido = f['시도 주소'] == fil['sido']
+            sigun = f['시군구 주소'] == fil['sigun']
+
+            if fil['sido'] != "none" and fil['sigun'] != "none":
+                data = f[sido & sigun][['해수욕장명','개장일','폐장일','홈페이지','연락처']]
+            elif fil['sigun'] == "none":
+                data = f[sido][['해수욕장명', '개장일', '폐장일', '홈페이지', '연락처']]
+            else :
+                data = f[sigun][['해수욕장명','개장일','폐장일','홈페이지','연락처']]
+
+            key = data.to_dict().keys()
+            v = data.to_dict().values()
+            v = list(map(lambda x:list(x.values()), v))
+            value=[]
+
+            for i in range(5):
+                d = {j:v[i][j] for j in range(len(v[i]))}
+                value.append(d)
+
+            result = dict(zip(key, value))
+            result['시도 주소'] = fil['sido']
+            result['시군구 주소'] = fil['sigun']
 
         return render_template('main.html',result = result)
+
+
     if request.method == 'GET':
         return render_template('main.html')
 
@@ -70,7 +96,10 @@ def main():
 def detail():
 
     name = request.args.get('name')
-    sido = sido_map[request.args.get('sido')]
+    if request.args.get('sido') in sido_map.keys():
+        sido = sido_map[request.args.get('sido')]
+    else:
+        sido = request.args.get('sido')
 
     f = pd.read_csv('해양수산부_해수욕장 개장 폐장 정보.csv', encoding='CP949', engine='python')
     data = f[f['해수욕장명'] == name].to_dict()
@@ -159,11 +188,15 @@ def detail():
             result['beach_wid'] = i['beach_wid']
             result['beach_len'] = i['beach_len']
             result['beach_knd'] = i['beach_knd']
-            result['lat'] = i['lat']    #TODO: 쓸지안쓸지
+            result['lat'] = i['lat']
             result['lon'] = i['lon']
             break
 
-    # print(render_template('detail.html',result=result))
+    print(result)
+
+    if request.args.get('reg') == '1':
+        result['alarm'] = "등록 되었습니다."
+        return render_template('detail.html', result=result)
     return render_template('detail.html',result=result)
 
 @app.route('/login',methods = ['POST','GET'])
@@ -176,7 +209,7 @@ def login():
 
         client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
         db = client.gobeachornot
-        col = db.signup
+        col = db.SignupInfo
 
         query = {"id":info["id"], "pw":info["pw"]}
 
@@ -206,7 +239,7 @@ def mybeach():
 
             client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
             db = client.gobeachornot
-            col = db.mybeach
+            col = db.MyBeachInfo
 
             for i in value:
                 q = {}
@@ -219,7 +252,7 @@ def mybeach():
 
             client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
             db = client.gobeachornot
-            col = db.mybeach
+            col = db.MyBeachInfo
             cur = col.find({'id':session['uid']})
             doc = dumps(list(cur))
             result={}
@@ -242,7 +275,7 @@ def signup():
     if request.method == 'POST':
         client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
         db = client.gobeachornot
-        col = db.signup
+        col = db.SignupInfo
 
         tmp = request.form
 
@@ -268,12 +301,12 @@ def registerBeach():
 
         client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
         db = client.gobeachornot
-        col = db.mybeach
+        col = db.MyBeachInfo
 
         q = {'id':session['uid'],'name':name,'sido':sido,'time':nowDatetime}
         col.insert_one(q)
 
-        qp = "?"+'name='+name+'&sido='+request.args.get('sido')
+        qp = "?"+'name='+name+'&sido='+request.args.get('sido')+'&reg=1'
 
         return redirect(url_for('detail')+qp)
     else:

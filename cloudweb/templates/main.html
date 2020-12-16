@@ -51,7 +51,7 @@
     <style>
         h1 {
             text-align:center;
-            margin-top:40px;
+            padding-top:40px;
             margin-bottom:20px;
         }
         h2 {text-align: center;}
@@ -66,7 +66,8 @@
         }
         #ssj {
             margin-top: 40px;
-            margin-bottom: 30px;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
         }
         .center_div{
             margin: 0 auto;
@@ -76,17 +77,18 @@
            margin: auto;
            width: 60% !important;
         }
+        #up {background-color: #E1F5FE;}
     </style>
 </head>
 <body>
     {% include 'nav.html' %}
+    <div id="up">
     <h1>🏖 GoBeach or Not 🏝</h1><br>
-
-    <form class="example" action="action_page.php">
+    <form id="search" action="{{ url_for('main') }}" method = "POST">
         <div class="container center_div">
            <div class="input-group input-group-lg">
-              <input type="text" class="form-control" placeholder="해수욕장 이름" aria-label="Text input with dropdown button">
-              <button type="submit" class="btn btn-primary">검색</button>
+               <input type="text" name="search" class="form-control" placeholder="해수욕장 이름" autocomplete="off" aria-label="Text input with dropdown button">
+               <input type="submit" class="btn btn-primary" value="검색">
            </div>
         </div>
     </form>
@@ -126,7 +128,7 @@
       </div>
 
     </form>
-
+</div>
 
     {% if result is defined %}
     <h2>
@@ -190,5 +192,9 @@
     </table>
     {% endif %}
 
+<footer class="page-footer font-small blue fixed-bottom">
+  <div class="footer-copyright text-center py-3">Konkuk University : O ByeongHyeon
+  </div>
+</footer>
 </body>
 </html>

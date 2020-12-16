@@ -6,9 +6,9 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
 
-    <title>detail</title>
+    <title>해수욕장 정보</title>
     <style>
-        h1 {text-align: center; color:dodgerblue}
+        h1 {text-align: center;}
         div {color:dodgerblue, font-size:15px;}
         a {color:black;}
         #list1 {
@@ -24,6 +24,8 @@
         table {
             padding: 10px;
         }
+        th {text-align: center;}
+
         h3 {
             border-bottom:3px solid dodgerblue;
             padding:3px;
@@ -31,16 +33,19 @@
             display:inline-block;
         }
         #name {
-            margin-top:30px;
+            padding-top:30px;
             margin-bottom:50px;
         }
+        #up {background-color: #E1F5FE;}
+
     </style>
 </head>
 <body>
     {% include 'nav.html' %}
+    <div id="up">
 
     <div id="name" class="row justify-content-center">
-        <h1 class="text-center">{{ result['해수욕장명'] }} 해수욕장</h1>
+        <h1 class="text-center"><strong>{{ result['해수욕장명'] }} 해수욕장</strong></h1>
     </div>
     <div id="info" class="container">
         <div class="row justify-content-center">
@@ -61,19 +66,37 @@
             <div id="list2" class="col">
                 <ul class="list-unstyled">
                     <ul>
+                        {% if result['beach_wid'] is undefined %}
+                        <li>해변폭 : - </li>
+                        {% else %}
                         <li>해변폭 : {{ result['beach_wid'] }}</li>
+                        {% endif %}
+                        {% if result['beach_len'] is undefined %}
+                        <li>해변총연장 : -</li>
+                        {% else %}
                         <li>해변총연장 : {{ result['beach_len'] }}</li>
+                        {% endif %}
+                        {% if result['beach_knd'] is undefined %}
+                        <li>해변 특징 : -</li>
+                        {% else %}
                         <li>해변 특징 : {{ result['beach_knd'] }}</li>
-                        <li>위도, 경도 : {{ result['lat'] }}, {{ result['lon'] }}</li>
+                        {% endif %}
+                        {% if result['lat'] is undefined %}
+                        <li>위도, 경도 : -</li>
+                        {% else %}
+                        <li>위도, 경도 : {{ result['lat'] }} {{ result['lon'] }}</li>
+                        {% endif %}
+
                     </ul>
                 </ul>
             </div>
         </div>
     </div>
+    </div>
     <div class="row justify-content-center">
         <div class="col">
             <h3>
-                휴양 적합 여부 :
+                방문 적합 여부 :
                 {% if result['휴양적합여부'] == '부적합1' %}
                 <span style="color:red">부적합</span>
                 {% elif result['휴양적합여부'] == '부적합2' %}
@@ -106,7 +129,7 @@
             <tr>
                 <td scope="col" align="center" width="150" height="80">대장균 : {{ result['대장균'] }}</td>
                 <td scope="col" align="center" width="150">장구균 : {{ result['장구균'] }}</td>
-                <td scope="col" align="center">조사지점<br>위도, 경도 : {{ result['조사지점(위도)'], result['조사지점(경도)'] }}</td>
+                <td scope="col" align="center">조사지점<br>위도, 경도 : {{ result['조사지점(위도)'] }}   {{ result['조사지점(경도)'] }}</td>
             </tr>
             <tr>
                 <td align="center" colspan="5">판정 : <strong style="font-size:20px"><span style="color:green">{{ result['적합여부'] }}</span></strong></td>
@@ -130,5 +153,11 @@
             </tr>
         </thead>
     </table>
+
+    {% if result['alarm'] is defined %}
+    <script type="text/javascript">
+    alert("{{ result['alarm'] }}");
+    </script>
+    {% endif %}
 </body>
 </html>
