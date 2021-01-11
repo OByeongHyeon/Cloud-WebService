@@ -21,6 +21,7 @@ OpenAPI 방식의 공공데이터 활용 (공공데이터포털)
 Total Architecture
 ---
 <img src="https://user-images.githubusercontent.com/67847920/104159342-7a300f00-5432-11eb-81e8-a9e219beefec.png" width="700px">
+
 ### Serverless Computing & Microservice ( AWS Lambda + API Gateway )
 
 - [Zappa](https://github.com/Miserlou/Zappa) 를 이용하여 Python Flask application을 AWS Lambda + API Gateway에 배포
@@ -33,15 +34,20 @@ Total Architecture
 
 구현 결과
 ------
+
 #### [ main ]
 <img src="https://user-images.githubusercontent.com/67847920/104159429-a3e93600-5432-11eb-8971-4f246d34e8de.png" width="700px">
 <img src="https://user-images.githubusercontent.com/67847920/104159440-a8155380-5432-11eb-8333-c19fe37ea5fd.png" width="700px"><br>
+
 #### [ detail ]
 <img src="https://user-images.githubusercontent.com/67847920/104159446-ab104400-5432-11eb-90de-7f750b2edcd0.png" width="700px"><br>
+
 #### [ signup ]
 <img src="https://user-images.githubusercontent.com/67847920/104159451-ad729e00-5432-11eb-84de-0809c0a5c1e2.png" width="700px"><br>
+
 #### [ login ]
 <img src="https://user-images.githubusercontent.com/67847920/104159458-afd4f800-5432-11eb-8185-94bb1ab6167a.png" width="700px">
 <img src="https://user-images.githubusercontent.com/67847920/104159464-b19ebb80-5432-11eb-87b3-deaae9ec78bf.png" width="700px"><br>
+
 #### [ my beach ]
 <img src="https://user-images.githubusercontent.com/67847920/104159470-b499ac00-5432-11eb-8ecf-1e37df21aae7.png" width="700px">
