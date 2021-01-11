@@ -7,16 +7,17 @@ import requests
 import pandas as pd
 from datetime import timedelta
 import datetime
+import pickle
 
+with open('data.pickle', 'rb') as f:
+    Data = pickle.load(f)
 
-url1 = 'http://apis.data.go.kr/1192000/service/OceansBeachSeawaterService1/getOceansBeachSeawaterInfo1'
-key1 = 'JczkNAYUK0nuC7gzVNgSj2%2FUHiwakF7h%2BMI7BkHeAuKc7ctuY961tl%2F%2B%2Fo2hCS2TjorkkeQ2IEek%2BGPFiC0Xdg%3D%3D'
-url2 = 'https://seantour.com/seantour_map/travel/getBeachCongestionApi.do'
-url3 = 'http://apis.data.go.kr/1192000/service/OceansBeachInfoService1/getOceansBeachInfo1'
-key2 = 'JczkNAYUK0nuC7gzVNgSj2%2FUHiwakF7h%2BMI7BkHeAuKc7ctuY961tl%2F%2B%2Fo2hCS2TjorkkeQ2IEek%2BGPFiC0Xdg%3D%3D'
-
-sido_map = {'부산광역시':'부산','인천광역시':'인천','울산광역시':'울산','강원도':'강원','충청남도':'충남'
-               ,'전라북도':'전북','전라남도':'전남','경상북도':'경북','경상남도':'경남','제주특별자치도':'제주'}
+sido_map = Data['sido_map']
+URL1 = Data['URL1']
+URL2 = Data['URL2']
+URL3 = Data['URL3']
+KEY1 = Data['KEY1']
+KEY2 = Data['KEY2']
 
 app = Flask(__name__)
 app.secret_key = '~@gsafewf^@#$^vwssdf324315aw&^$#'
@@ -25,12 +26,11 @@ app.secret_key = '~@gsafewf^@#$^vwssdf324315aw&^$#'
 @app.before_request
 def make_session_permanent():
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(minutes=5)
+    app.permanent_session_lifetime = timedelta(minutes=10)
 
 @app.route('/')
 def index():
     return redirect(url_for('main'))
-
 
 @app.route('/main',methods = ['POST','GET'])
 def main():
@@ -39,19 +39,15 @@ def main():
         f = pd.read_csv('해양수산부_해수욕장 개장 폐장 정보.csv', encoding='CP949', engine='python')
 
         if 'search' in fil:
-
             name = f['해수욕장명'] == fil['search']
             data = f[name][['해수욕장명','시도 주소','시군구 주소','개장일','폐장일','홈페이지','연락처']]
-
             key = data.to_dict().keys()
             v = data.to_dict().values()
             v = list(map(lambda x: list(x.values()), v))
             value = []
-
             for i in range(7):
                 d = {j: v[i][j] for j in range(len(v[i]))}
                 value.append(d)
-
             result = dict(zip(key, value))
 
             if result['시도 주소'] != {}:
@@ -60,8 +56,6 @@ def main():
             else:
                 del result['시도 주소']
                 del result['시군구 주소']
-
-
         else:
             sido = f['시도 주소'] == fil['sido']
             sigun = f['시군구 주소'] == fil['sigun']
@@ -70,7 +64,7 @@ def main():
                 data = f[sido & sigun][['해수욕장명','개장일','폐장일','홈페이지','연락처']]
             elif fil['sigun'] == "none":
                 data = f[sido][['해수욕장명', '개장일', '폐장일', '홈페이지', '연락처']]
-            else :
+            else:
                 data = f[sigun][['해수욕장명','개장일','폐장일','홈페이지','연락처']]
 
             key = data.to_dict().keys()
@@ -88,13 +82,11 @@ def main():
 
         return render_template('main.html',result = result)
 
-
     if request.method == 'GET':
         return render_template('main.html')
 
 @app.route('/detail')
 def detail():
-
     name = request.args.get('name')
     if request.args.get('sido') in sido_map.keys():
         sido = sido_map[request.args.get('sido')]
@@ -129,11 +121,11 @@ def detail():
     tmp = {}
 
     for i in range(2018, 2013, -1):
-        queryParams = f'?{parse.quote_plus("ServiceKey")}={key1}&' + parse.urlencode({
+        queryParams = f'?{parse.quote_plus("ServiceKey")}={KEY1}&' + parse.urlencode({
             parse.quote_plus('resultType'): 'json',
             parse.quote_plus('SIDO_NM'): sido,
             parse.quote_plus('RES_YEAR'): i})
-        req = requests.get(url1 + queryParams)
+        req = requests.get(URL1 + queryParams)
         d = req.json()['getOceansBeachSeawaterInfo']['item']
 
         for j in d:
@@ -154,11 +146,8 @@ def detail():
             tmp['조사지점(경도)'] = d[0]['lon']
 
     result.update(tmp)
-
-    req = requests.get(url2)
-
+    req = requests.get(URL2)
     data = req.json()
-
     for i in data:
         nm = data[i]['poiNm'].split(' ')[1]
         if nm in name or name in nm:
@@ -176,12 +165,10 @@ def detail():
         result['휴양적합여부'] = '부적합2'
     else: result['휴양적합여부'] = '적합'
 
-
-
-    queryParams = f'?{parse.quote_plus("ServiceKey")}={key2}&' + parse.urlencode({
+    queryParams = f'?{parse.quote_plus("ServiceKey")}={KEY2}&' + parse.urlencode({
         parse.quote_plus('resultType'): 'json',
         parse.quote_plus('SIDO_NM'): sido})
-    data3 = requests.get(url3 + queryParams).json()['getOceansBeachInfo']['item']
+    data3 = requests.get(URL3 + queryParams).json()['getOceansBeachInfo']['item']
 
     for i in data3:
         if i['sta_nm'] in name or name in i['sta_nm']:
@@ -191,9 +178,6 @@ def detail():
             result['lat'] = i['lat']
             result['lon'] = i['lon']
             break
-
-    print(result)
-
     if request.args.get('reg') == '1':
         result['alarm'] = "등록 되었습니다."
         return render_template('detail.html', result=result)
@@ -203,7 +187,6 @@ def detail():
 def login():
     if request.method == 'GET':
         return render_template("login.html")
-
     if request.method == 'POST':
         info = request.form
 
@@ -215,7 +198,6 @@ def login():
 
         cur = col.find(query)
         doc = dumps(list(cur))
-
         if doc != "[]":
             session['uid'] = info['id']
             print("{0} login!".format(session['uid']))
@@ -236,20 +218,16 @@ def mybeach():
     if 'uid' in session:
         if request.method == 'POST':
             value = request.form.getlist('check')
-
             client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
             db = client.gobeachornot
             col = db.MyBeachInfo
-
             for i in value:
                 q = {}
                 q['name'] = i
                 col.delete_one(q)
-
             return redirect(url_for("mybeach"))
         else:
             print("mybeach session id : {0}".format(session['uid']))
-
             client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
             db = client.gobeachornot
             col = db.MyBeachInfo
@@ -261,9 +239,7 @@ def mybeach():
                 for i in json.loads(doc):   #list
                     result[no]=i
                     no+=1
-
             return render_template("mybeach.html",result=result)
-
     else:
         return render_template("login.html")
 
@@ -276,16 +252,12 @@ def signup():
         client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
         db = client.gobeachornot
         col = db.SignupInfo
-
         tmp = request.form
-
         if tmp['id']=="" or tmp['pw']=="" or tmp['name']=="" or tmp['hp']=="":
             message = "빈칸 없이 모두 작성 부탁드립니다."
             return render_template("signup.html", message=message)
-
         info = {'id':tmp['id'], 'pw':tmp['pw'], 'name':tmp['name'], 'hp':tmp['hp']}
         col.insert_one(info)
-
         return render_template("login.html")
 
 @app.route('/registerBeach')
@@ -293,21 +265,15 @@ def registerBeach():
     if 'uid' in session:
         now = datetime.datetime.now()
         nowDatetime = now.strftime('%Y-%m-%d %H:%M:%S')
-
         print("register session id : {0}".format(session['uid']))
-
         name = request.args.get('name')
         sido = sido_map[request.args.get('sido')]
-
         client = pymongo.MongoClient("mongodb://bh:123@13.125.5.167:27017/gobeachornot")  # defaults to port 27017
         db = client.gobeachornot
         col = db.MyBeachInfo
-
         q = {'id':session['uid'],'name':name,'sido':sido,'time':nowDatetime}
         col.insert_one(q)
-
         qp = "?"+'name='+name+'&sido='+request.args.get('sido')+'&reg=1'
-
         return redirect(url_for('detail')+qp)
     else:
         return render_template("login.html")
@@ -315,16 +281,3 @@ def registerBeach():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-
-#
-# f = open('해양수산부_해수욕장 개장 폐장 정보.csv', 'r')
-# rdr = csv.reader(f)
-# for line in rdr:
-#     print(line)
-# f.close()
