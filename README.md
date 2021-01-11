@@ -8,12 +8,14 @@
 4. 회원가입 및 로그인∙로그아웃
 5. 로그인을 한 사용자에 한해 관심 해수욕장 등록·조회·삭제
 <br>
+
 ### OpenAPI 방식의 공공데이터 활용 (공공데이터포털)
 - 해수욕장 수질적합 여부 서비스 (REST)
 - 해양수산부_해수욕장 혼잡도 신호등 (REST)
 - 해수욕장정보 서비스 (REST)
 - 해양수산부_해수욕장 개장 폐장 정보
 <br>
+
 ### Total Architecture
 
 ![Untitled](https://user-images.githubusercontent.com/67847920/104159342-7a300f00-5432-11eb-81e8-a9e219beefec.png)
