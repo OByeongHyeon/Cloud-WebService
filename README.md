@@ -1,7 +1,7 @@
 
 ## - GO BEACH OR NOT -<br><br>공공데이터를 이용한 해수욕장 방문 적합 여부 판별 서비스
 
-### 기능
+기능
 ---
 1. 해수욕장 검색 및 지역별 해수욕장 목록 조회
 2. 각 해수욕장에 대한 기본 정보 + 연간 행사 정보 제공
@@ -10,7 +10,7 @@
 5. 로그인을 한 사용자에 한해 관심 해수욕장 등록·조회·삭제
 <br>
 
-### OpenAPI 방식의 공공데이터 활용 (공공데이터포털)
+OpenAPI 방식의 공공데이터 활용 (공공데이터포털)
 ---
 - 해수욕장 수질적합 여부 서비스 (REST)
 - 해양수산부_해수욕장 혼잡도 신호등 (REST)
@@ -18,7 +18,7 @@
 - 해양수산부_해수욕장 개장 폐장 정보
 <br>
 
-### Total Architecture
+Total Architecture
 ---
 <img src="https://user-images.githubusercontent.com/67847920/104159342-7a300f00-5432-11eb-81e8-a9e219beefec.png" width="700px">
 ### Serverless Computing & Microservice ( AWS Lambda + API Gateway )
@@ -31,7 +31,7 @@
 - 회원가입 정보 + 나의 해수욕장 정보 관리
 <br>
 
-### 구현 결과
+구현 결과
 ------
 #### [ main ]
 <img src="https://user-images.githubusercontent.com/67847920/104159429-a3e93600-5432-11eb-8971-4f246d34e8de.png" width="700px">
